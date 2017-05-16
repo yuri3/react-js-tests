@@ -234,21 +234,20 @@ const list = [{
 
 export const CALL_API = 'CALL_API';
 
-const callApi = async (endpoint, requestOptions) => {
+/*const callApi = async (endpoint, requestOptions) => {
   try {
-    /*const response = await fetch(`https://localhost:3001/${endpoint}`, requestOptions);
+    const response = await fetch(`https://localhost:3001/${endpoint}`, requestOptions);
     if(response.ok) {
       return response.json();
     } else {
       return response.json().then(error => {
         throw new Error(error.errors[0].message);
       });
-    }*/
-    setTimeout(() => list, 1000);
+    }
   } catch(err) {
     throw new Error(err);
   }
-};
+};*/
 
 export default store => next => async action => {
   const callAPI = action[CALL_API];
@@ -256,7 +255,7 @@ export default store => next => async action => {
     return next(action);
   }
 
-  const {types, requestOptions = {}} = callAPI;
+  const {types/*, requestOptions = {}*/} = callAPI;
   let {endpoint} = callAPI;
 
   if(typeof endpoint === 'function') {
@@ -276,8 +275,9 @@ export default store => next => async action => {
   const [requestType, successType, failureType] = types;
   next({type: requestType});
   try {
-    const response = await callApi(endpoint, requestOptions);
-    next({type: successType, response});
+    const response = list;/*await callApi(endpoint, requestOptions);*/
+    setTimeout(() => next({type: successType, response}), 1000);
+    //next({type: successType, response});
   } catch(error) {
     next({type: failureType, error: error.message || 'Something bad happened!'});
   }
