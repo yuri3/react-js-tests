@@ -21,8 +21,9 @@ export const questions = (state = [], action) => {
   }
 };
 
-export const questionOptions = (state = {
+export const testState = (state = {
   isFetching: false,
+  numOfQuestions: 5,
   timer: {minutes: 1, seconds: 0},
   spentTime: 0,
   index: 0,

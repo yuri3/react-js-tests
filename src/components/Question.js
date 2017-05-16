@@ -12,8 +12,8 @@ class Question extends Component {
   constructor(props) {
     super(props);
     this.state = {
-      min: this.props.questionOptions.timer.minutes,
-      sec: this.props.questionOptions.timer.seconds,
+      min: this.props.testState.timer.minutes,
+      sec: this.props.testState.timer.seconds,
       checkedValue: {id: null},
     };
     this.timerId = null;
@@ -40,7 +40,7 @@ class Question extends Component {
     const {
       addSpentTime,
       question,
-      questionOptions: {index, timer: {minutes, seconds}},
+      testState: {numOfQuestions, index, timer: {minutes, seconds}},
       saveUserAnswer,
       resetTimer,
       resetQuestions,
@@ -48,7 +48,7 @@ class Question extends Component {
       history
     } = this.props;
     clearInterval(this.timerId);
-    if(index < 10) {
+    if(index < numOfQuestions) {
       const {min, sec, checkedValue} = this.state;
       const spentTime = min * 60 + sec - (minutes * 60 + seconds);
       addSpentTime(spentTime);
@@ -56,7 +56,7 @@ class Question extends Component {
       saveUserAnswer(answer);
     }
     resetTimer();
-    if(index + 1 < 5) {
+    if(index + 1 < numOfQuestions) {
       nextQuestion(index + 1);
     } else {
       resetQuestions();
@@ -64,7 +64,7 @@ class Question extends Component {
     }
   }
   startTimer() {
-    let {questionOptions: {timer: {minutes, seconds}}, updateTime} = this.props;
+    let {testState: {timer: {minutes, seconds}}, updateTime} = this.props;
     this.timerId = setInterval(() => {
       if(seconds === 0 && minutes >= 1) {
         --minutes;
@@ -117,7 +117,7 @@ class Question extends Component {
     const {
       location,
       question: {title, code, answers, userAnswer},
-      questionOptions: {timer: {minutes, seconds}}
+      testState: {timer: {minutes, seconds}}
     } = this.props;
     const {checkedValue} = this.state;
     const showResults = location.pathname === '/test/results';
@@ -172,14 +172,17 @@ Question.propTypes = {
     })).isRequired,
     userAnswerId: PropTypes.number,
   }).isRequired,
-  questionOptions: PropTypes.shape({
+  testState: PropTypes.shape({
     isFetching: PropTypes.bool.isRequired,
+    numOfQuestions: PropTypes.number.isRequired,
     index: PropTypes.number.isRequired,
     timer: PropTypes.shape({
       minutes: PropTypes.number.isRequired,
       seconds: PropTypes.number.isRequired,
     }).isRequired,
   }).isRequired,
+  history: PropTypes.object,
+  location: PropTypes.object,
   updateTime: PropTypes.func,
   addSpentTime: PropTypes.func,
   saveUserAnswer: PropTypes.func,

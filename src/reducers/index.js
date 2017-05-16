@@ -1,9 +1,9 @@
 import { combineReducers } from 'redux';
-import { questions, questionOptions } from './questions';
+import { questions, testState } from './questions';
 
 const rootReducer = combineReducers({
   questions,
-  questionOptions,
+  testState,
 });
 
 export default rootReducer;

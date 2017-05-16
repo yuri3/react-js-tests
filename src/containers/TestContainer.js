@@ -1,7 +1,6 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
-import { withRouter } from 'react-router-dom';
 import RaisedButton from 'material-ui/RaisedButton';
 import TimerIcon from 'material-ui/svg-icons/image/timer';
 import { bindActionCreators } from 'redux';
@@ -16,30 +15,30 @@ class Test extends Component {
   constructor(props) {
     super(props);
     this.state = {isTestStart: false};
-    this.willSpendTime = this.willSpendTime.bind(this);
-    this.toggleTest = this.toggleTest.bind(this);
+    this.spendTime = this.spendTime.bind(this);
+    this.startTest = this.startTest.bind(this);
   }
   componentDidMount() {
     const {fetchQuestions} = this.props;
     fetchQuestions();
   }
-  willSpendTime() {
-    const {numOfQuestions, questionOptions: {timer: {minutes, seconds}}} = this.props;
-    const timeSumInSeconds = numOfQuestions * (minutes * 60 + seconds);
-    const willSpend = ((timeSumInSeconds / 60) + '').split('.');
-    const min = willSpend[0];
-    const sec = willSpend[1] ?
-      (Number.parseFloat(('0.' + willSpend[1])) * 60).toFixed() : '0';
+  spendTime() {
+    const {testState: {numOfQuestions, timer: {minutes, seconds}}} = this.props;
+    const timeInSeconds = numOfQuestions * (minutes * 60 + seconds);
+    const spend = ((timeInSeconds / 60) + '').split('.');
+    const min = spend[0];
+    const sec = spend[1] ?
+      (Number.parseFloat(('0.' + spend[1])) * 60).toFixed() : '0';
     return min + '.' + ((sec < 10) ? 0 + sec : sec);
   }
-  toggleTest() {
-    this.setState({...this.state, isTestStart: !this.state.isTestStart});
+  startTest() {
+    this.setState({isTestStart: true});
   }
   render() {
     const {isTestStart} = this.state;
     const {
       questions,
-      questionOptions,
+      testState,
       updateTime,
       addSpentTime,
       saveUserAnswer,
@@ -49,13 +48,13 @@ class Test extends Component {
       resetUserAnswers,
       nextQuestion
     } = this.props;
-    const {index, isFetching} = questionOptions;
+    const {index, isFetching} = testState;
     return (
       <div style={style}>
         {!isTestStart &&
           <div>
             <h3 style={style}>
-              Total time of the test {this.willSpendTime()} minutes.
+              Total time of the test {this.spendTime()} minutes.
             </h3>
             <RaisedButton
               disabled={!(!isFetching && questions.length > 0)}
@@ -63,14 +62,14 @@ class Test extends Component {
               labelPosition="before"
               primary={true}
               icon={<TimerIcon />}
-              onTouchTap={this.toggleTest}
+              onTouchTap={this.startTest}
             />
           </div>}
         {isTestStart && questions.length > 0 &&
           <Question
             key={index}
             question={questions[index]}
-            questionOptions={questionOptions}
+            testState={testState}
             updateTime={updateTime}
             addSpentTime={addSpentTime}
             saveUserAnswer={saveUserAnswer}
@@ -96,8 +95,9 @@ Test.propTypes = {
       isTrue: PropTypes.bool,
     })).isRequired,
   })).isRequired,
-  questionOptions: PropTypes.shape({
+  testState: PropTypes.shape({
     isFetching: PropTypes.bool.isRequired,
+    numOfQuestions: PropTypes.number.isRequired,
     index: PropTypes.number.isRequired,
   }).isRequired,
   fetchQuestions: PropTypes.func.isRequired,
@@ -111,13 +111,9 @@ Test.propTypes = {
   nextQuestion: PropTypes.func.isRequired,
 };
 
-Test.defaultProps = {
-  numOfQuestions: 5,
-};
-
 const mapStateToProps = (state, ownProps) => ({
   questions: state.questions,
-  questionOptions: state.questionOptions,
+  testState: state.testState,
 });
 
 const mapDispatchToProps = (dispatch) => {
@@ -129,4 +125,4 @@ const TestContainer = connect(
   mapDispatchToProps
 )(Test);
 
-export default withRouter(TestContainer);
+export default TestContainer;

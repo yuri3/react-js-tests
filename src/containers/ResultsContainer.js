@@ -18,25 +18,29 @@ class Results extends Component {
   constructor(props) {
     super(props);
     this.state = {showResults: false};
-    this.wasSpendTime = this.wasSpendTime.bind(this);
-    this.startTest = this.startTest.bind(this);
+    this.spendTime = this.spendTime.bind(this);
+    this.reStartTest = this.reStartTest.bind(this);
     this.toggleResults = this.toggleResults.bind(this);
   }
-  wasSpendTime(spentTime) {
-    const {numOfQuestions = 5, questionOptions: {timer: {minutes, seconds}}} = this.props;
+  componentWillUnmount() {
+    const {resetUserAnswers} = this.props;
+    resetUserAnswers();
+  }
+  spendTime(time) {
+    const {testState: {numOfQuestions, timer: {minutes, seconds}}} = this.props;
     let spentTimeInSeconds;
-    if(spentTime) {
-      spentTimeInSeconds = spentTime;
+    if(time) {
+      spentTimeInSeconds = time;
     } else {
       spentTimeInSeconds = numOfQuestions * (minutes * 60 + seconds);
     }
-    const wasSpend = ((spentTimeInSeconds / 60) + '').split('.');
-    const min = wasSpend[0];
-    const sec = wasSpend[1] ?
-      (Number.parseFloat(('0.' + wasSpend[1])) * 60).toFixed() : '0';
+    const spend = ((spentTimeInSeconds / 60) + '').split('.');
+    const min = spend[0];
+    const sec = spend[1] ?
+      (Number.parseFloat(('0.' + spend[1])) * 60).toFixed() : '0';
     return min + '.' + ((sec < 10) ? 0 + sec : sec);
   }
-  startTest() {
+  reStartTest() {
     const {resetSpentTime, history} = this.props;
     resetSpentTime();
     history.push('/test');
@@ -46,8 +50,8 @@ class Results extends Component {
   }
   render() {
     const {showResults} = this.state;
-    const {questionOptions} = this.props;
-    const {spentTime, userAnswers} = questionOptions;
+    const {testState} = this.props;
+    const {spentTime, userAnswers} = testState;
     const numOfCorrAns = userAnswers.reduce((prev, curr) => {
       const correctAnswer = curr.answers.find(answer => answer.isTrue);
       if(correctAnswer.id === curr.userAnswer.id) {
@@ -57,10 +61,17 @@ class Results extends Component {
     }, 0);
     const percentages = numOfCorrAns / userAnswers.length * 100;
     const scaleFive = 5 * percentages / 100;
+    const resultsButton = <RaisedButton
+      label={!showResults ? 'Show Results' : 'Hide Results'}
+      labelPosition="before"
+      secondary={true}
+      style={{margin: '20px 0px'}}
+      icon={!showResults ? <ExpandMore /> : <ExpandLess />}
+      onTouchTap={this.toggleResults}/>;
     return (
       <div style={style}>
         <h3>
-          You've spent {spentTime} sec. or {this.wasSpendTime(spentTime)} min.<br/>
+          You've spent {spentTime} sec. or {this.spendTime(spentTime)} min.<br/>
           You've answered correctly {numOfCorrAns} question(s) from {userAnswers.length}!<br/>
           {percentages.toFixed(2)}% or {scaleFive.toFixed(2)} - 5:)
         </h3>
@@ -69,31 +80,17 @@ class Results extends Component {
           labelPosition="before"
           primary={true}
           icon={<RePlay />}
-          onTouchTap={this.startTest}
+          onTouchTap={this.reStartTest}
         /><br/>
-        <RaisedButton
-          label={!showResults ? 'Show Results' : 'Hide Results'}
-          labelPosition="before"
-          secondary={true}
-          style={{margin: '20px 0px'}}
-          icon={!showResults ? <ExpandMore /> : <ExpandLess />}
-          onTouchTap={this.toggleResults}
-        />
+        {resultsButton}
         {showResults && userAnswers.length > 0 && userAnswers.map(question => (
           <Question
             key={question.id}
             question={question}
-            questionOptions={questionOptions}
+            testState={testState}
           />
         ))}
-        {showResults && userAnswers.length > 0 && <RaisedButton
-          label={!showResults ? 'Show Results' : 'Hide Results'}
-          labelPosition="before"
-          secondary={true}
-          style={{margin: '20px 0px'}}
-          icon={!showResults ? <ExpandMore /> : <ExpandLess />}
-          onTouchTap={this.toggleResults}
-        />}
+        {showResults && userAnswers.length > 0 && resultsButton}
       </div>
     )
   }
@@ -110,7 +107,8 @@ Results.propTypes = {
       isTrue: PropTypes.bool,
     })).isRequired,
   })).isRequired,
-  questionOptions: PropTypes.shape({
+  testState: PropTypes.shape({
+    numOfQuestions: PropTypes.number.isRequired,
     timer: PropTypes.shape({
       minutes: PropTypes.number.isRequired,
       seconds: PropTypes.number.isRequired,
@@ -119,11 +117,13 @@ Results.propTypes = {
     spentTime: PropTypes.number.isRequired,
   }).isRequired,
   resetSpentTime: PropTypes.func.isRequired,
+  resetUserAnswers: PropTypes.func.isRequired,
+  history: PropTypes.object,
 };
 
 const mapStateToProps = (state, ownProps) => ({
   questions: state.questions,
-  questionOptions: state.questionOptions,
+  testState: state.testState,
 });
 
 const mapDispatchToProps = (dispatch) => {

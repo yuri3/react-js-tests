@@ -62,9 +62,4 @@ Timer.propTypes = {
   seconds: PropTypes.number,
 };
 
-Timer.defaultProps = {
-  minutes: 1,
-  seconds: 0,
-};
-
 export default Timer;
