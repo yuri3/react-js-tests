@@ -6,34 +6,22 @@ import RadioButtonChecked from 'material-ui/svg-icons/toggle/radio-button-checke
 import RaisedButton from 'material-ui/RaisedButton';
 import NavigateNextIcon from 'material-ui/svg-icons/image/navigate-next';
 
-const labelStyle = {
-  correct: {color: '#00BCD4'},
-  wrong: {color: '#F44336'}
+const svgIcons = {
+  correct: <RadioButtonChecked style={{fill: '#00BCD4'}}/>,
+  wrong: <RadioButtonChecked style={{fill: '#F44336'}}/>,
+  wasCorrect: <RadioButtonUnchecked style={{fill: '#00BCD4'}}/>,
 };
 
-const iconStyle = {
-  correct: {borderRadius: '50%', backgroundColor: '#00BCD4'},
-  wrong: {borderRadius: '50%', backgroundColor: '#F44336'}
+const labelStyle = {
+  correct: {color: '#00BCD4'},
+  wrong: {color: '#F44336'},
+  wasCorrect: {color: '#00BCD4'},
 };
 
 class Question extends Component {
   constructor(props) {
     super(props);
-    this.state = {checkedValue: {id: null}};
-    this.handleChange = this.handleChange.bind(this);
     this.getType = this.getType.bind(this);
-  }
-  componentWillReceiveProps(nextProps) {
-    if(nextProps.question !== this.props.question) {
-      this.setState({checkedValue: {id: null}});
-    }
-  }
-  handleChange(event, value) {
-    const {checkedValue} = this.state;
-    if(checkedValue.id === value.id) {
-      return;
-    }
-    this.setState({checkedValue: value});
   }
   getType(value) {
     const {question: {userAnswer}} = this.props;
@@ -47,51 +35,49 @@ class Question extends Component {
       return 'wrong';
     }
     if(value.isTrue) {
-      return 'correct';
+      return 'wasCorrect';
     }
   }
   render() {
     const {
       readonly,
+      checkedValue,
       question: {title, code, answers, userAnswer},
+      handleChange,
       handleNext
     } = this.props;
-    const {checkedValue} = this.state;
     const correctAnswer = readonly && answers.find(answer => answer.isTrue);
     const defaultSelected = (userAnswer && correctAnswer.id === userAnswer.id) ?
       correctAnswer : userAnswer;
     return (
       <div style={{maxWidth: '500px', textAlign: 'left'}}>
-        <RadioButtonChecked color="blue"/>
-        <RadioButtonUnchecked color="red"/>
         <h3>{title}</h3>
         <pre>{code}</pre>
         <RadioButtonGroup
           name="answer"
-          onChange={this.handleChange}
+          onChange={handleChange}
           defaultSelected={defaultSelected}
         >
-          {answers.map((value, i) => (
+          {answers.map(value => (
             <RadioButton
               key={value.id}
               disabled={readonly}
               value={value}
               label={value.answer}
-              uncheckedIcon={<RadioButtonUnchecked color="red"/>}
-              checkedIcon={<RadioButtonChecked color="blue"/>}
+              uncheckedIcon={readonly ? svgIcons[this.getType(value)] : null}
+              checkedIcon={readonly ? svgIcons[this.getType(value)] : null}
               labelStyle={labelStyle[this.getType(value)]}
-              iconStyle={iconStyle[this.getType(value)]}
             />
           ))}
         </RadioButtonGroup>
         {!readonly && <div style={{textAlign: 'center'}}>
           <RaisedButton
-            disabled={!checkedValue.id}
+            disabled={!checkedValue}
             label="Next"
             labelPosition="before"
             primary={true}
             icon={<NavigateNextIcon />}
-            onTouchTap={() => handleNext(checkedValue)}
+            onTouchTap={handleNext}
           />
         </div>}
       </div>
@@ -101,6 +87,7 @@ class Question extends Component {
 
 Question.propTypes = {
   readonly: PropTypes.bool.isRequired,
+  checkedValue: PropTypes.bool,
   question: PropTypes.shape({
     id: PropTypes.number.isRequired,
     tags: PropTypes.arrayOf(PropTypes.string).isRequired,
@@ -112,6 +99,7 @@ Question.propTypes = {
     })).isRequired,
     userAnswerId: PropTypes.number,
   }).isRequired,
+  handleChange: PropTypes.func,
   handleNext: PropTypes.func,
 };
 

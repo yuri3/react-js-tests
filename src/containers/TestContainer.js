@@ -22,11 +22,13 @@ class Test extends Component {
       min: minutes,
       sec: seconds,
       isTestStart: false,
+      checkedValue: {id: null},
     };
     this.timerId = null;
     this.startTest = this.startTest.bind(this);
     this.startTimer = this.startTimer.bind(this);
     this.handleNext = this.handleNext.bind(this);
+    this.handleChange = this.handleChange.bind(this);
   }
   componentDidMount() {
     const {fetchQuestions} = this.props;
@@ -36,11 +38,11 @@ class Test extends Component {
     const {isTestStart} = this.state;
     const {testState: {index}} = this.props;
     if(isTestStart && nextProps.testState.index !== index) {
-      this.startTimer(nextProps);
+      this.setState({...this.state, checkedValue: {id: null}}, () => this.startTimer(nextProps));
     }
   }
   startTest() {
-    this.setState({isTestStart: true}, () => this.startTimer());
+    this.setState({...this.state, isTestStart: true}, () => this.startTimer());
   }
   startTimer(nextProps) {
     const props = nextProps ? nextProps : this.props;
@@ -57,7 +59,8 @@ class Test extends Component {
       }
     }, 1000);
   }
-  handleNext(checkedValue) {
+  handleNext() {
+    const {checkedValue} = this.state;
     const {
       questions: {questionsList: {lists}},
       addSpentTime,
@@ -81,12 +84,16 @@ class Test extends Component {
       history.push('/test/results');
     }
   }
+  handleChange(event, value) {
+    const {checkedValue} = this.state;
+    if(checkedValue.id === value.id) {
+      return;
+    }
+    this.setState({...this.state, checkedValue: value});
+  }
   render() {
-    const {isTestStart} = this.state;
-    const {
-      questions,
-      testState
-    } = this.props;
+    const {isTestStart, checkedValue} = this.state;
+    const {questions, testState} = this.props;
     const {questionsList: {loading, lists}} = questions;
     const {index, timer: {minutes, seconds}} = testState;
     return (
@@ -113,7 +120,9 @@ class Test extends Component {
             />
             <Question
               readonly={false}
+              checkedValue={!!checkedValue.id}
               question={lists[index]}
+              handleChange={this.handleChange}
               handleNext={this.handleNext}
             />
           </div>
