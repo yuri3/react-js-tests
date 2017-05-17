@@ -8,6 +8,7 @@ import ExpandMore from 'material-ui/svg-icons/navigation/expand-more';
 import ExpandLess from 'material-ui/svg-icons/navigation/expand-less';
 import { bindActionCreators } from 'redux';
 import * as actions from '../actions/questions';
+import { spendTime } from '../tools';
 import Question from '../components/Question';
 
 const style = {
@@ -18,31 +19,17 @@ class Results extends Component {
   constructor(props) {
     super(props);
     this.state = {showResults: false};
-    this.spendTime = this.spendTime.bind(this);
     this.reStartTest = this.reStartTest.bind(this);
     this.toggleResults = this.toggleResults.bind(this);
   }
   componentWillUnmount() {
-    const {resetUserAnswers} = this.props;
+    const {resetQuestions, resetSpentTime, resetUserAnswers} = this.props;
+    resetQuestions();
+    resetSpentTime();
     resetUserAnswers();
   }
-  spendTime(time) {
-    const {testState: {numOfQuestions, timer: {minutes, seconds}}} = this.props;
-    let spentTimeInSeconds;
-    if(time) {
-      spentTimeInSeconds = time;
-    } else {
-      spentTimeInSeconds = numOfQuestions * (minutes * 60 + seconds);
-    }
-    const spend = ((spentTimeInSeconds / 60) + '').split('.');
-    const min = spend[0];
-    const sec = spend[1] ?
-      (Number.parseFloat(('0.' + spend[1])) * 60).toFixed() : '0';
-    return min + '.' + ((sec < 10) ? 0 + sec : sec);
-  }
   reStartTest() {
-    const {resetSpentTime, history} = this.props;
-    resetSpentTime();
+    const {history} = this.props;
     history.push('/test');
   }
   toggleResults() {
@@ -54,10 +41,7 @@ class Results extends Component {
     const {spentTime, userAnswers} = testState;
     const numOfCorrAns = userAnswers.reduce((prev, curr) => {
       const correctAnswer = curr.answers.find(answer => answer.isTrue);
-      if(correctAnswer.id === curr.userAnswer.id) {
-        ++prev;
-      }
-      return prev;
+      return (correctAnswer.id === curr.userAnswer.id) ? prev + 1 : prev;
     }, 0);
     const percentages = numOfCorrAns / userAnswers.length * 100;
     const scaleFive = 5 * percentages / 100;
@@ -71,7 +55,7 @@ class Results extends Component {
     return (
       <div style={style}>
         <h3>
-          You've spent {spentTime} sec. or {this.spendTime(spentTime)} min.<br/>
+          You've spent {spentTime} sec. or {spendTime(testState, spentTime)} min.<br/>
           You've answered correctly {numOfCorrAns} question(s) from {userAnswers.length}!<br/>
           {percentages.toFixed(2)}% or {scaleFive.toFixed(2)} - 5:)
         </h3>
@@ -86,8 +70,8 @@ class Results extends Component {
         {showResults && userAnswers.length > 0 && userAnswers.map(question => (
           <Question
             key={question.id}
+            readonly={true}
             question={question}
-            testState={testState}
           />
         ))}
         {showResults && userAnswers.length > 0 && resultsButton}
@@ -97,16 +81,6 @@ class Results extends Component {
 }
 
 Results.propTypes = {
-  questions: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    tags: PropTypes.arrayOf(PropTypes.string).isRequired,
-    code: PropTypes.string.isRequired,
-    answers: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      answer: PropTypes.string.isRequired,
-      isTrue: PropTypes.bool,
-    })).isRequired,
-  })).isRequired,
   testState: PropTypes.shape({
     numOfQuestions: PropTypes.number.isRequired,
     timer: PropTypes.shape({
@@ -116,6 +90,7 @@ Results.propTypes = {
     userAnswers: PropTypes.array.isRequired,
     spentTime: PropTypes.number.isRequired,
   }).isRequired,
+  resetQuestions: PropTypes.func.isRequired,
   resetSpentTime: PropTypes.func.isRequired,
   resetUserAnswers: PropTypes.func.isRequired,
   history: PropTypes.object,

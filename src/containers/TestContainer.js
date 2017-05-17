@@ -1,10 +1,13 @@
-import React, {Component} from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
 import { connect } from 'react-redux';
+import { withRouter } from 'react-router-dom';
 import RaisedButton from 'material-ui/RaisedButton';
 import TimerIcon from 'material-ui/svg-icons/image/timer';
 import { bindActionCreators } from 'redux';
 import * as actions from '../actions/questions';
+import { spendTime } from '../tools';
+import Timer from '../components/Timer';
 import Question from '../components/Question';
 
 const style = {
@@ -14,50 +17,87 @@ const style = {
 class Test extends Component {
   constructor(props) {
     super(props);
-    this.state = {isTestStart: false};
-    this.spendTime = this.spendTime.bind(this);
+    const {timer: {minutes, seconds}} = this.props.testState;
+    this.state = {
+      min: minutes,
+      sec: seconds,
+      isTestStart: false,
+    };
+    this.timerId = null;
     this.startTest = this.startTest.bind(this);
+    this.startTimer = this.startTimer.bind(this);
+    this.handleNext = this.handleNext.bind(this);
   }
   componentDidMount() {
     const {fetchQuestions} = this.props;
     fetchQuestions();
   }
-  spendTime() {
-    const {testState: {numOfQuestions, timer: {minutes, seconds}}} = this.props;
-    const timeInSeconds = numOfQuestions * (minutes * 60 + seconds);
-    const spend = ((timeInSeconds / 60) + '').split('.');
-    const min = spend[0];
-    const sec = spend[1] ?
-      (Number.parseFloat(('0.' + spend[1])) * 60).toFixed() : '0';
-    return min + '.' + ((sec < 10) ? 0 + sec : sec);
+  componentWillReceiveProps(nextProps) {
+    const {isTestStart} = this.state;
+    const {testState: {index}} = this.props;
+    if(isTestStart && nextProps.testState.index !== index) {
+      this.startTimer(nextProps);
+    }
   }
   startTest() {
-    this.setState({isTestStart: true});
+    this.setState({isTestStart: true}, () => this.startTimer());
+  }
+  startTimer(nextProps) {
+    const props = nextProps ? nextProps : this.props;
+    let {testState: {timer: {minutes, seconds}}, updateTime} = props;
+    this.timerId = setInterval(() => {
+      if(seconds === 0 && minutes >= 1) {
+        --minutes;
+        seconds = 60;
+      }
+      --seconds;
+      updateTime(minutes, seconds);
+      if(minutes === 0 && seconds === 0) {
+        this.handleNext();
+      }
+    }, 1000);
+  }
+  handleNext(checkedValue) {
+    const {
+      questions: {questionsList: {lists}},
+      addSpentTime,
+      testState: {numOfQuestions, index, timer: {minutes, seconds}},
+      saveUserAnswer,
+      resetTimer,
+      nextQuestion,
+      history
+    } = this.props;
+    clearInterval(this.timerId);
+    const {min, sec} = this.state;
+    const spentTime = min * 60 + sec - (minutes * 60 + seconds);
+    const answer = {...lists[index], userAnswer: checkedValue ? checkedValue : {checkedValue: {id: null}}};
+    resetTimer();
+    addSpentTime(spentTime);
+    saveUserAnswer(answer);
+
+    if(index + 1 < numOfQuestions) {
+      nextQuestion(index + 1);
+    } else {
+      history.push('/test/results');
+    }
   }
   render() {
     const {isTestStart} = this.state;
     const {
       questions,
-      testState,
-      updateTime,
-      addSpentTime,
-      saveUserAnswer,
-      resetTimer,
-      resetSpentTime,
-      resetQuestions,
-      resetUserAnswers,
-      nextQuestion
+      testState
     } = this.props;
-    const {index, isFetching} = testState;
+    const {questionsList: {loading, lists}} = questions;
+    const {index, timer: {minutes, seconds}} = testState;
     return (
       <div style={style}>
         {!isTestStart &&
           <div>
             <h3 style={style}>
-              Total time of the test {this.spendTime()} minutes.
+              Total time of the test {spendTime(testState)} minutes.
             </h3>
             <RaisedButton
-              disabled={!(!isFetching && questions.length > 0)}
+              disabled={loading}
               label="Start Test"
               labelPosition="before"
               primary={true}
@@ -65,49 +105,54 @@ class Test extends Component {
               onTouchTap={this.startTest}
             />
           </div>}
-        {isTestStart && questions.length > 0 &&
-          <Question
-            key={index}
-            question={questions[index]}
-            testState={testState}
-            updateTime={updateTime}
-            addSpentTime={addSpentTime}
-            saveUserAnswer={saveUserAnswer}
-            resetTimer={resetTimer}
-            resetSpentTime={resetSpentTime}
-            resetQuestions={resetQuestions}
-            resetUserAnswers={resetUserAnswers}
-            nextQuestion={nextQuestion}
-          />}
+        {isTestStart && lists.length > 0 && (
+          <div>
+            <Timer
+              minutes={minutes}
+              seconds={seconds}
+            />
+            <Question
+              readonly={false}
+              question={lists[index]}
+              handleNext={this.handleNext}
+            />
+          </div>
+        )}
       </div>
     );
   }
 }
-
 Test.propTypes = {
-  questions: PropTypes.arrayOf(PropTypes.shape({
-    id: PropTypes.number.isRequired,
-    tags: PropTypes.arrayOf(PropTypes.string).isRequired,
-    code: PropTypes.string.isRequired,
-    answers: PropTypes.arrayOf(PropTypes.shape({
-      id: PropTypes.number.isRequired,
-      answer: PropTypes.string.isRequired,
-      isTrue: PropTypes.bool,
-    })).isRequired,
-  })).isRequired,
-  testState: PropTypes.shape({
-    isFetching: PropTypes.bool.isRequired,
-    numOfQuestions: PropTypes.number.isRequired,
-    index: PropTypes.number.isRequired,
+  questions: PropTypes.shape({
+    questionsList: PropTypes.shape({
+      lists: PropTypes.arrayOf(PropTypes.shape({
+        id: PropTypes.number.isRequired,
+        tags: PropTypes.arrayOf(PropTypes.string).isRequired,
+        code: PropTypes.string.isRequired,
+        answers: PropTypes.arrayOf(PropTypes.shape({
+          id: PropTypes.number.isRequired,
+          answer: PropTypes.string.isRequired,
+          isTrue: PropTypes.bool,
+        })).isRequired,
+      })).isRequired,
+      loading: PropTypes.bool.isRequired,
+    }).isRequired,
   }).isRequired,
+  testState: PropTypes.shape({
+    numOfQuestions: PropTypes.number.isRequired,
+    timer: PropTypes.shape({
+      minutes: PropTypes.number.isRequired,
+      seconds: PropTypes.number.isRequired,
+    }).isRequired,
+    index: PropTypes.number.isRequired,
+    userAnswers: PropTypes.array.isRequired,
+  }).isRequired,
+  history: PropTypes.object.isRequired,
   fetchQuestions: PropTypes.func.isRequired,
   updateTime: PropTypes.func.isRequired,
   addSpentTime: PropTypes.func.isRequired,
   saveUserAnswer: PropTypes.func.isRequired,
   resetTimer: PropTypes.func.isRequired,
-  resetSpentTime: PropTypes.func.isRequired,
-  resetQuestions: PropTypes.func.isRequired,
-  resetUserAnswers: PropTypes.func.isRequired,
   nextQuestion: PropTypes.func.isRequired,
 };
 
@@ -125,4 +170,4 @@ const TestContainer = connect(
   mapDispatchToProps
 )(Test);
 
-export default TestContainer;
+export default withRouter(TestContainer);

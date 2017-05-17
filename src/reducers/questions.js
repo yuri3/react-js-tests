@@ -12,30 +12,37 @@ import {
   RESET_USER_ANSWERS
 } from '../actions/questions';
 
-export const questions = (state = [], action) => {
+const QUESTIONS_INITIAL_STATE = {
+  questionsList: {
+    loading: false,
+    error: null,
+    lists: [],
+  },
+};
+
+export const questions = (state = QUESTIONS_INITIAL_STATE, action) => {
   switch(action.type) {
+    case FETCH_QUESTIONS_REQUEST:
+      return {...state, questionsList: {lists: [], error: null, loading: true}};
     case FETCH_QUESTIONS_SUCCESS:
-      return action.response;
+      return {...state, questionsList: {lists: action.response, error: null, loading: false}};
+    case FETCH_QUESTIONS_FAILURE:
+      return {...state, questionsList: {lists: [], error: action.error, loading: false}};
     default:
       return state;
   }
 };
 
-export const testState = (state = {
-  isFetching: false,
+const TEST_INITIAL_STATE = {
   numOfQuestions: 5,
-  timer: {minutes: 1, seconds: 0},
+  timer: {minutes: 0, seconds: 5},
   spentTime: 0,
   index: 0,
   userAnswers: [],
-}, action) => {
+};
+
+export const testState = (state = TEST_INITIAL_STATE, action) => {
   switch(action.type) {
-    case FETCH_QUESTIONS_REQUEST:
-      return {...state, isFetching: true};
-    case FETCH_QUESTIONS_SUCCESS:
-      return {...state, isFetching: false};
-    case FETCH_QUESTIONS_FAILURE:
-      return {...state, isFetching: false, error: action.error};
     case UPDATE_TIME:
       return {...state, timer: {minutes: action.minutes, seconds: action.seconds}};
     case ADD_SPENT_TIME:
@@ -45,7 +52,7 @@ export const testState = (state = {
     case NEXT_QUESTION:
       return {...state, index: action.index};
     case RESET_TIMER:
-      return {...state, timer: {minutes: 1, seconds: 0}};
+      return {...state, timer: {minutes: 0, seconds: 5}};
     case RESET_SPENT_TIME:
       return {...state, spentTime: 0};
     case RESET_QUESTIONS:
