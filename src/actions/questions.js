@@ -17,10 +17,9 @@ export const fetchQuestions = () => dispatch => {
 //---UPDATE_TIME----------------------------------------------------------------->
 export const UPDATE_TIME = 'UPDATE_TIME';
 
-export const updateTime = (minutes, seconds) => ({
+export const updateTime = (timer) => ({
   type: UPDATE_TIME,
-  minutes,
-  seconds,
+  timer,
 });
 //---ADD_SPENT_TIME-------------------------------------------------------------->
 export const ADD_SPENT_TIME = 'ADD_SPENT_TIME';

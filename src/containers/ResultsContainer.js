@@ -8,7 +8,7 @@ import ExpandMore from 'material-ui/svg-icons/navigation/expand-more';
 import ExpandLess from 'material-ui/svg-icons/navigation/expand-less';
 import { bindActionCreators } from 'redux';
 import * as actions from '../actions/questions';
-import { spendTime } from '../tools';
+import { getTime } from '../tools';
 import Question from '../components/Question';
 
 const style = {
@@ -54,11 +54,11 @@ class Results extends Component {
       onTouchTap={this.toggleResults}/>;
     return (
       <div style={style}>
-        <h3>
-          You've spent {spentTime} sec. or {spendTime(testState, spentTime)} min.<br/>
+        {userAnswers.length > 0 && <h3>
+          You've spent {spentTime} sec. or {getTime(spentTime)} min.<br/>
           You've answered correctly {numOfCorrAns} question(s) from {userAnswers.length}!<br/>
           {percentages.toFixed(2)}% or {scaleFive.toFixed(2)} - 5:)
-        </h3>
+        </h3>}
         <RaisedButton
           label="Restart Test"
           labelPosition="before"
@@ -66,7 +66,7 @@ class Results extends Component {
           icon={<RePlay />}
           onTouchTap={this.reStartTest}
         /><br/>
-        {resultsButton}
+        {userAnswers.length > 0 && resultsButton}
         {showResults && userAnswers.length > 0 && userAnswers.map(question => (
           <Question
             key={question.id}
@@ -83,10 +83,7 @@ class Results extends Component {
 Results.propTypes = {
   testState: PropTypes.shape({
     numOfQuestions: PropTypes.number.isRequired,
-    timer: PropTypes.shape({
-      minutes: PropTypes.number.isRequired,
-      seconds: PropTypes.number.isRequired,
-    }).isRequired,
+    timer: PropTypes.number.isRequired,
     userAnswers: PropTypes.array.isRequired,
     spentTime: PropTypes.number.isRequired,
   }).isRequired,

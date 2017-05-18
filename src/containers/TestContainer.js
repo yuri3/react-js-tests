@@ -6,7 +6,7 @@ import RaisedButton from 'material-ui/RaisedButton';
 import TimerIcon from 'material-ui/svg-icons/image/timer';
 import { bindActionCreators } from 'redux';
 import * as actions from '../actions/questions';
-import { spendTime } from '../tools';
+import { getTime } from '../tools';
 import Timer from '../components/Timer';
 import Question from '../components/Question';
 
@@ -17,10 +17,9 @@ const style = {
 class Test extends Component {
   constructor(props) {
     super(props);
-    const {timer: {minutes, seconds}} = this.props.testState;
+    const {timer} = this.props.testState;
     this.state = {
-      min: minutes,
-      sec: seconds,
+      initialTimer: timer,
       isTestStart: false,
       checkedValue: {id: null},
     };
@@ -46,37 +45,31 @@ class Test extends Component {
   }
   startTimer(nextProps) {
     const props = nextProps ? nextProps : this.props;
-    let {testState: {timer: {minutes, seconds}}, updateTime} = props;
+    let {testState: {timer}, updateTime} = props;
     this.timerId = setInterval(() => {
-      if(seconds === 0 && minutes >= 1) {
-        --minutes;
-        seconds = 60;
-      }
-      --seconds;
-      updateTime(minutes, seconds);
-      if(minutes === 0 && seconds === 0) {
+      --timer;
+      updateTime(timer);
+      if(timer === 0) {
         this.handleNext();
       }
     }, 1000);
   }
   handleNext() {
-    const {checkedValue} = this.state;
+    const {checkedValue, initialTimer} = this.state;
     const {
       questions: {questionsList: {lists}},
       addSpentTime,
-      testState: {numOfQuestions, index, timer: {minutes, seconds}},
+      testState: {timer, index, numOfQuestions},
       saveUserAnswer,
       resetTimer,
       nextQuestion,
       history
     } = this.props;
     clearInterval(this.timerId);
-    const {min, sec} = this.state;
-    const spentTime = min * 60 + sec - (minutes * 60 + seconds);
-    const answer = {...lists[index], userAnswer: checkedValue ? checkedValue : {checkedValue: {id: null}}};
-    resetTimer();
-    addSpentTime(spentTime);
+    const answer = {...lists[index], userAnswer: checkedValue};
+    addSpentTime((initialTimer - timer));
     saveUserAnswer(answer);
+    resetTimer();
 
     if(index + 1 < numOfQuestions) {
       nextQuestion(index + 1);
@@ -95,13 +88,13 @@ class Test extends Component {
     const {isTestStart, checkedValue} = this.state;
     const {questions, testState} = this.props;
     const {questionsList: {loading, lists}} = questions;
-    const {index, timer: {minutes, seconds}} = testState;
+    const {numOfQuestions, timer, index} = testState;
     return (
       <div style={style}>
         {!isTestStart &&
           <div>
             <h3 style={style}>
-              Total time of the test {spendTime(testState)} minutes.
+              Total time of the test {getTime(timer, numOfQuestions)} minutes.
             </h3>
             <RaisedButton
               disabled={loading}
@@ -114,10 +107,7 @@ class Test extends Component {
           </div>}
         {isTestStart && lists.length > 0 && (
           <div>
-            <Timer
-              minutes={minutes}
-              seconds={seconds}
-            />
+            <Timer time={timer}/>
             <Question
               readonly={false}
               checkedValue={!!checkedValue.id}
@@ -149,10 +139,7 @@ Test.propTypes = {
   }).isRequired,
   testState: PropTypes.shape({
     numOfQuestions: PropTypes.number.isRequired,
-    timer: PropTypes.shape({
-      minutes: PropTypes.number.isRequired,
-      seconds: PropTypes.number.isRequired,
-    }).isRequired,
+    timer: PropTypes.number.isRequired,
     index: PropTypes.number.isRequired,
     userAnswers: PropTypes.array.isRequired,
   }).isRequired,

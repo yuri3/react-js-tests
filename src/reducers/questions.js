@@ -21,13 +21,14 @@ const QUESTIONS_INITIAL_STATE = {
 };
 
 export const questions = (state = QUESTIONS_INITIAL_STATE, action) => {
+  const {response, error} = action;
   switch(action.type) {
     case FETCH_QUESTIONS_REQUEST:
       return {...state, questionsList: {lists: [], error: null, loading: true}};
     case FETCH_QUESTIONS_SUCCESS:
-      return {...state, questionsList: {lists: action.response, error: null, loading: false}};
+      return {...state, questionsList: {lists: response, error: null, loading: false}};
     case FETCH_QUESTIONS_FAILURE:
-      return {...state, questionsList: {lists: [], error: action.error, loading: false}};
+      return {...state, questionsList: {lists: [], error, loading: false}};
     default:
       return state;
   }
@@ -35,24 +36,25 @@ export const questions = (state = QUESTIONS_INITIAL_STATE, action) => {
 
 const TEST_INITIAL_STATE = {
   numOfQuestions: 5,
-  timer: {minutes: 0, seconds: 5},
+  timer: 5,
   spentTime: 0,
   index: 0,
   userAnswers: [],
 };
 
 export const testState = (state = TEST_INITIAL_STATE, action) => {
+  const {timer, spentTime, checkedValue, index} = action;
   switch(action.type) {
     case UPDATE_TIME:
-      return {...state, timer: {minutes: action.minutes, seconds: action.seconds}};
+      return {...state, timer};
     case ADD_SPENT_TIME:
-      return {...state, spentTime: state.spentTime + action.spentTime};
+      return {...state, spentTime: state.spentTime + spentTime};
     case SAVE_USER_ANSWER:
-      return {...state, userAnswers: [...state.userAnswers, action.checkedValue]};
+      return {...state, userAnswers: [...state.userAnswers, checkedValue]};
     case NEXT_QUESTION:
-      return {...state, index: action.index};
+      return {...state, index};
     case RESET_TIMER:
-      return {...state, timer: {minutes: 0, seconds: 5}};
+      return {...state, timer: TEST_INITIAL_STATE.timer};
     case RESET_SPENT_TIME:
       return {...state, spentTime: 0};
     case RESET_QUESTIONS:

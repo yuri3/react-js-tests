@@ -1,6 +1,7 @@
 import React, {Component} from 'react';
 import PropTypes from 'prop-types';
 import CircularProgress from 'material-ui/CircularProgress';
+import { getTime } from '../tools';
 
 const root = {
   textAlign: 'center',
@@ -24,19 +25,18 @@ const timeStyle = {
 class Timer extends Component {
   constructor(props) {
     super(props);
-    const {minutes, seconds} = this.props;
-    this.state = {completed: 100, maxTime: (minutes * 60 + seconds)};
+    const {time} = this.props;
+    this.state = {completed: 100, maxTime: time};
   }
   componentWillReceiveProps(nextProps) {
     const {completed, maxTime} = this.state;
-    const {minutes, seconds} = nextProps;
-    const progress = (completed - (completed - ((minutes * 60 + seconds) / maxTime * 100)));
+    const {time} = nextProps;
+    const progress = (completed - (completed - (time / maxTime * 100)));
     this.setState({completed: progress})
   }
   render() {
     const {completed} = this.state;
-    const {minutes, seconds} = this.props;
-    const time = minutes + ' : ' + (seconds < 10 ? '0' + seconds : seconds);
+    const {time} = this.props;
     return (
       <div style={root}>
         <div style={progressStyle}>
@@ -44,10 +44,10 @@ class Timer extends Component {
             mode="determinate"
             value={completed}
             size={150}
-            color={seconds < 10 ? 'red' : null}
+            color={time < 10 ? 'red' : null}
           />
             <div style={timeStyle}>
-              {time}
+              {getTime(time)}
             </div>
         </div>
       </div>
@@ -56,8 +56,7 @@ class Timer extends Component {
 }
 
 Timer.propTypes = {
-  minutes: PropTypes.number,
-  seconds: PropTypes.number,
+  time: PropTypes.number,
 };
 
 export default Timer;
