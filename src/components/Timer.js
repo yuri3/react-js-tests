@@ -45,6 +45,7 @@ class Timer extends Component {
             value={completed}
             size={150}
             color={time < 10 ? 'red' : null}
+            innerStyle={{border: '1px solid #00BCD4', borderRadius: '50%'}}
           />
             <div style={timeStyle}>
               {getTime(time)}

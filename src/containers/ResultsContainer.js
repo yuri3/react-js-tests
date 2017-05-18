@@ -7,7 +7,7 @@ import RePlay from 'material-ui/svg-icons/av/replay';
 import ExpandMore from 'material-ui/svg-icons/navigation/expand-more';
 import ExpandLess from 'material-ui/svg-icons/navigation/expand-less';
 import { bindActionCreators } from 'redux';
-import * as actions from '../actions/questions';
+import * as testState from '../actions/testState';
 import { getTime } from '../tools';
 import Question from '../components/Question';
 
@@ -94,12 +94,11 @@ Results.propTypes = {
 };
 
 const mapStateToProps = (state, ownProps) => ({
-  questions: state.questions,
   testState: state.testState,
 });
 
 const mapDispatchToProps = (dispatch) => {
-  return bindActionCreators(actions, dispatch);
+  return bindActionCreators(testState, dispatch);
 };
 
 const ResultsContainer = connect(

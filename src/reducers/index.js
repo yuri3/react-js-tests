@@ -1,5 +1,6 @@
 import { combineReducers } from 'redux';
-import { questions, testState } from './questions';
+import questions from './questions';
+import testState from './testState';
 
 const rootReducer = combineReducers({
   questions,
