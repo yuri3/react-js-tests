@@ -29,13 +29,13 @@ class App extends Component {
         <Router>
           <div>
             <Switch>
-              <Route exact path="/" render={() => <Redirect to="/test"/>}/>
+              <Route exact path="/" render={() => <Redirect to="/test/questions"/>}/>
               <Route path="/test/results" render={() => (
                 <div>
                   <ResultsContainer/>
                 </div>
               )}/>
-              <Route path="/test" render={() => (
+              <Route path="/test/questions" render={() => (
                 <div style={style}>
                   <TestContainer/>
                 </div>

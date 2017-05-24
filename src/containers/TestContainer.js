@@ -118,7 +118,7 @@ Test.propTypes = {
   questions: PropTypes.shape({
     lists: PropTypes.arrayOf(PropTypes.shape({
       id: PropTypes.number.isRequired,
-      tags: PropTypes.arrayOf(PropTypes.string).isRequired,
+      tags: PropTypes.arrayOf(PropTypes.string),
       code: PropTypes.string.isRequired,
       answers: PropTypes.arrayOf(PropTypes.shape({
         id: PropTypes.number.isRequired,

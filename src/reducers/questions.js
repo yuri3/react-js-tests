@@ -11,8 +11,8 @@ const initialState = {
 };
 
 export default (state = initialState, action) => {
-  const {response, error} = action;
-  switch(action.type) {
+  const {type, response, error} = action;
+  switch(type) {
     case FETCH_QUESTIONS_REQUEST:
       return {...state, loading: true, error: null, lists: []};
     case FETCH_QUESTIONS_SUCCESS:

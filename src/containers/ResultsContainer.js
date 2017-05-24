@@ -30,7 +30,7 @@ class Results extends Component {
   }
   reStartTest() {
     const {history} = this.props;
-    history.push('/test');
+    history.push('/test/questions');
   }
   toggleResults() {
     this.setState({showResults: !this.state.showResults});
